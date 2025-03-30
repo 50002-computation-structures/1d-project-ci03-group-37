@@ -1,0 +1,59 @@
+module game_cu (
+    input clk,  // clock
+    input rst,  // reset
+    input regfile_rb_out[32], // direct reading of regfile data from rb_out
+    input button0,
+    
+    output alufn[6],
+    output asel[3],
+    output bsel[3],
+    output alu_out_sel[2],
+    output regfile_wa[3],
+    output regfile_ra1[3],
+    output regfile_ra2[3],
+    output regfile_we
+) {
+    
+    enum States {
+        IDLE,
+        SPAWN_MOLE
+    }
+    
+    dff game_fsm[$width(States)](#INIT(States.IDLE), .clk(clk), .rst(rst))
+    
+    always {
+        
+        alufn = 0
+        asel = 0 
+        bsel = 0
+        regfile_we = 0
+        regfile_wa = d6 
+        regfile_ra1 = d0
+        regfile_ra2 = d0
+        alu_out_sel = 0
+        
+        game_fsm.d = game_fsm.q
+        
+        case (game_fsm.q) {
+            
+            States.IDLE: /* This state sets moleTimer to default 10s */
+                alufn = b011010 // "A" operation selected!
+                asel = b11 // Decimal 10 selected!
+                alu_out_sel = b00 // ALU's output selected!
+                regfile_we = 1 // Write Enabled!
+                regfile_wa = d1 // moleTimer register selected!
+                
+                if (button0) {
+                    game_fsm.d = States.SPAWN_MOLE
+                }
+            
+            States.SPAWN_MOLE: /* This state writes an RNG number to currentMoleIndex */
+                regfile_we = 1 // Write Enabled!
+                regfile_wa = d0 // currentMoleIndex register selected!
+                alu_out_sel = b01 // RNG input selected!
+                game_fsm.d = States.IDLE
+            
+        }
+        
+    }
+}

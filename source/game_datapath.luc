@@ -1,0 +1,69 @@
+module game_datapath (
+    input clk,  // clock
+    input rst,  // reset
+    input rng_num[3], // random number generator
+    
+    input button0,
+    
+    output current_mole_index_out[3],
+    output timer_out[32]
+    
+) {
+    
+    // temporary variables
+    sig input_alu_a[32]
+    sig input_alu_b[32]
+    
+    /* instantiate alu module here */
+    game_alu alu
+    
+    .clk(clk) {
+        
+        game_cu game_cu(
+            .rst(rst),
+            .button0(button0)
+        )
+        
+        regfiles regfile(
+            .rst(rst),
+            .we(game_cu.regfile_we),
+            .wa(game_cu.regfile_wa),
+            .ra_in(game_cu.regfile_ra1),
+            .rb_in(game_cu.regfile_ra2)
+        )
+        
+    }
+    
+    always {
+        
+        game_cu.regfile_rb_out = regfile.rb_out
+        
+        /* asel mux */
+        case (game_cu.asel) {
+            b00: input_alu_a = regfile.ra_out
+            b11: input_alu_a = 10
+            default: input_alu_a = 0
+        }
+        
+        /* bsel mux */
+        case (game_cu.bsel) {
+            b00: input_alu_b = regfile.rb_out
+            default: input_alu_b = 0
+        }
+        
+        /* insert alu assignments here */
+        alu.a = input_alu_a
+        alu.b = input_alu_b
+        alu.alufn = game_cu.alufn
+        
+        /* wdsel mux */
+        case (game_cu.alu_out_sel) {
+            b01: regfile.data = rng_num
+            default: regfile.data = alu.alu_output
+        }
+        
+        current_mole_index_out = regfile.currentMoleIndex_out
+        timer_out = regfile.timer_out
+       
+    }
+}
