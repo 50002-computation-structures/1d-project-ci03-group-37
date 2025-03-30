@@ -1,0 +1,71 @@
+module regfiles (
+    input clk,  // clock
+    input rst,  // reset
+    input wa[3],
+    input we,
+    input data[32],
+    
+    input ra_in[3],
+    input rb_in[3],
+    output ra_out[32],
+    output rb_out[32],
+    
+    output currentMoleIndex_out[3],
+    output timer_out[32]
+    
+) {
+    
+    .clk(clk) {
+        .rst(rst) {
+            dff currentMoleIndex[3](#INIT(0))
+            dff moleTimer[32](#INIT(0))
+            dff buttonPressed[32](#INIT(0))
+            dff currentScore[32](#INIT(0))
+            dff pointsPerHit[32](#INIT(0))
+            dff highScore[32](#INIT(0))
+            dff temp_reg[32](#INIT(0))
+        }
+    }
+    
+    always {
+        
+        if (we) {
+            case (wa) {
+                d0: currentMoleIndex.d = data[2:0]
+                d1: moleTimer.d = data
+                d2: buttonPressed.d = data
+                d3: currentScore.d = data
+                d4: pointsPerHit.d = data
+                d5: highScore.d = data
+                d6: temp_reg.d = data
+                
+            }
+        }
+        
+        case (ra_in) {
+            d0: ra_out = currentMoleIndex.q
+            d1: ra_out = moleTimer.q
+            d2: ra_out = buttonPressed.q
+            d3: ra_out = currentScore.q
+            d4: ra_out = pointsPerHit.q
+            d5: ra_out = highScore.q
+            d6: ra_out = temp_reg.q
+            default: ra_out = 0
+        }
+        
+        case (rb_in) {
+            d0: rb_out = currentMoleIndex.q
+            d1: rb_out = moleTimer.q
+            d2: rb_out = buttonPressed.q
+            d3: rb_out = currentScore.q
+            d4: rb_out = pointsPerHit.q
+            d5: rb_out = highScore.q
+            d6: rb_out = temp_reg.q
+            default: rb_out = 0
+        }
+        
+        currentMoleIndex_out = currentMoleIndex.q
+        timer_out = moleTimer.q
+        
+    }
+}
