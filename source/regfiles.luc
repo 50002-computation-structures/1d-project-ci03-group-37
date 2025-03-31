@@ -11,7 +11,8 @@ module regfiles (
     output rb_out[32],
     
     output currentMoleIndex_out[3],
-    output timer_out[32]
+    output timer_out[32],
+    output current_score_out[32]
     
 ) {
     
@@ -66,6 +67,7 @@ module regfiles (
         
         currentMoleIndex_out = currentMoleIndex.q
         timer_out = moleTimer.q
+        current_score_out = currentScore.q
         
     }
 }
