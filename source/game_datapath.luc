@@ -1,7 +1,11 @@
-module game_datapath (
+module game_datapath #(
+    
+    SLOW_CLOCK_DIV ~ 26 : SLOW_CLOCK_DIV > 0,
+    FAST_CLOCK_DIV ~ 21 : FAST_CLOCK_DIV > 0
+
+)(
     input clk,  // clock
     input rst,  // reset
-    input rng_num[3], // random number generator
     
     input button0,
     
@@ -19,8 +23,17 @@ module game_datapath (
     
     .clk(clk) {
         
+        counter mole_timer_clock(#SIZE(1), #DIV(SLOW_CLOCK_DIV), .rst(rst))
+        edge_detector edge_detector_mole_timer(#RISE(1), #FALL(0), .in(mole_timer_clock.value))
+        
+        counter rng_generator_clock(#SIZE(1), #DIV(FAST_CLOCK_DIV), .rst(rst))
+        
+        /* Instantiate helper module: random_number_generator */
+        random_number_generator generator(.slow_clk(rng_generator_clock.value), .refresh(button0))
+        
         game_cu game_cu(
             .rst(rst),
+            .decrease_timer(edge_detector_mole_timer.out),
             .button0(button0)
         )
         
@@ -48,6 +61,8 @@ module game_datapath (
         /* bsel mux */
         case (game_cu.bsel) {
             b00: input_alu_b = regfile.rb_out
+            b01: input_alu_b = 0
+            b10: input_alu_b = 1
             default: input_alu_b = 0
         }
         
@@ -58,7 +73,7 @@ module game_datapath (
         
         /* wdsel mux */
         case (game_cu.alu_out_sel) {
-            b01: regfile.data = rng_num
+            b01: regfile.data = generator.out
             default: regfile.data = alu.alu_output
         }
         

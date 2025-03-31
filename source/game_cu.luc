@@ -2,6 +2,7 @@ module game_cu (
     input clk,  // clock
     input rst,  // reset
     input regfile_rb_out[32], // direct reading of regfile data from rb_out
+    input decrease_timer,
     input button0,
     
     output alufn[6],
@@ -16,7 +17,12 @@ module game_cu (
     
     enum States {
         IDLE,
-        SPAWN_MOLE
+        SPAWN_MOLE,
+        WAIT_INPUT,
+        CHECK_MOLETIMER,
+        BRANCH_MOLETIMER,
+        DECREASE_MOLETIMER,
+        GAMEOVER
     }
     
     dff game_fsm[$width(States)](#INIT(States.IDLE), .clk(clk), .rst(rst))
@@ -51,7 +57,38 @@ module game_cu (
                 regfile_we = 1 // Write Enabled!
                 regfile_wa = d0 // currentMoleIndex register selected!
                 alu_out_sel = b01 // RNG input selected!
-                game_fsm.d = States.IDLE
+                game_fsm.d = States.WAIT_INPUT
+            
+            States.WAIT_INPUT:
+                if (decrease_timer) {
+                    game_fsm.d = States.CHECK_MOLETIMER
+                }
+            
+            States.CHECK_MOLETIMER:
+                alufn = b110011 // Compare function selected!
+                regfile_ra1 = d1 // moleTimer register selected!
+                asel = b00
+                bsel = b01 // Decimal 0 is selected!
+                regfile_we = 1 // Write Enabled!
+                regfile_wa = d6 // Stores result in temporary register (to be read next cycle)
+                game_fsm.d = States.BRANCH_MOLETIMER
+            
+            States.BRANCH_MOLETIMER:
+                regfile_ra2 = d6 // Read temporary register (contains the Compare output)
+                if (~regfile_rb_out[0]) { // if timer is not zero
+                    game_fsm.d = States.DECREASE_MOLETIMER
+                } else {
+                    game_fsm.d = States.GAMEOVER
+                }
+            
+            States.DECREASE_MOLETIMER:
+                alufn = b000001 // Subtraction function selected!
+                regfile_ra1 = d1 // moleTimer register selected!
+                asel = b00
+                bsel = b10 // Decimal 1 is selected
+                regfile_we = 1 // Write Enabled!
+                regfile_wa = d1 // moleTimer is the Write Addr
+                game_fsm.d = States.WAIT_INPUT
             
         }
         
