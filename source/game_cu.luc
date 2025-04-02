@@ -10,8 +10,8 @@ module game_cu (
     input button4,
     
     output alufn[6],
-    output asel[3],
-    output bsel[3],
+    output asel[2],
+    output bsel[2],
     output alu_out_sel[3],
     output regfile_wa[3],
     output regfile_ra1[3],
@@ -29,7 +29,10 @@ module game_cu (
         CHECK_MOLETIMER,
         BRANCH_MOLETIMER,
         DECREASE_MOLETIMER,
-        GAMEOVER
+        GAMEOVER,
+        RESET_TIMER,
+        SET_POINTS
+        
     }
     
     dff game_fsm[$width(States)](#INIT(States.IDLE), .clk(clk), .rst(rst))
@@ -49,16 +52,23 @@ module game_cu (
         
         case (game_fsm.q) {
             
-            States.IDLE: /* This state sets moleTimer to default 10s */
-                alufn = b011010 // "A" operation selected!
-                asel = b11 // Decimal 10 selected!
-                alu_out_sel = b00 // ALU's output selected!
-                regfile_we = 1 // Write Enabled!
-                regfile_wa = d1 // moleTimer register selected!
+            States.IDLE: /* This state is the "HOME PAGE" */
                 
-                if (button0) {
-                    game_fsm.d = States.SPAWN_MOLE
+                if (button0) { /* "START" button */
+                    game_fsm.d = States.SET_POINTS
                 }
+                
+                else {
+                    game_fsm.d = States.IDLE
+                }
+            
+            States.SET_POINTS: /* This state sets the points per hit */
+                alufn = b011010 // "A" operation selected!
+                asel = b10 // Decimal "1" is selected
+                alu_out_sel = b000
+                regfile_we = 1
+                regfile_wa = d4 // pointsPerHit register is selected!
+                game_fsm.d = States.RESET_TIMER
             
             States.SPAWN_MOLE: /* This state writes an RNG number to currentMoleIndex */
                 regfile_we = 1 // Write Enabled!
@@ -66,35 +76,48 @@ module game_cu (
                 alu_out_sel = b001 // RNG input selected!
                 game_fsm.d = States.WAIT_INPUT
             
+            States.RESET_TIMER: /* This state resets the timer to 10 when a correctHit is detected */
+                /*alufn = b011010 // "A" operation selected!
+                asel = b11 // Decimal 10 selected!
+                alu_out_sel = b000 // ALU's output selected!
+                regfile_we = 1 // Write Enabled!
+                regfile_wa = d1 // moleTimer register selected!
+                game_fsm.d = States.SPAWN_MOLE*/          
+                
+                regfile_we = 1 // Write Enabled!
+                regfile_wa = d1 // moleTimer register selected!
+                alu_out_sel = b111 // Decimal "10" selected!
+                game_fsm.d = States.SPAWN_MOLE
+            
             States.WAIT_INPUT:
                 if (decrease_timer) {
                     game_fsm.d = States.CHECK_MOLETIMER
                 }
-                else if (button0) {
+                else if (button0) { /* if top button is pressed */
                     regfile_we = 1
                     regfile_wa = d2 // buttonPressed register selected!
                     alu_out_sel = b010 // Decimal 0 selected!
                     game_fsm.d = States.CHECK_HIT
                 }
-                else if (button1) {
+                else if (button1) { /* if middle button is pressed */
                     regfile_we = 1
                     regfile_wa = d2 // buttonPressed register selected!
                     alu_out_sel = b011 // Decimal 1 selected!
                     game_fsm.d = States.CHECK_HIT
                 }
-                else if (button2) {
+                else if (button2) { /* if bottom button is pressed */
                     regfile_we = 1
                     regfile_wa = d2 // buttonPressed register selected!
                     alu_out_sel = b100 // Decimal 2 selected!
                     game_fsm.d = States.CHECK_HIT
                 }
-                else if (button3) {
+                else if (button3) { /* if left button is pressed */
                     regfile_we = 1
                     regfile_wa = d2 // buttonPressed register selected!
                     alu_out_sel = b101 // Decimal 3 selected!
                     game_fsm.d = States.CHECK_HIT
                 }
-                else if (button4) {
+                else if (button4) { /* if right button is pressed */
                     regfile_we = 1
                     regfile_wa = d2 // buttonPressed register selected!
                     alu_out_sel = b110 // Decimal 4 selected!
@@ -126,11 +149,12 @@ module game_cu (
             States.UPDATE_SCORE:
                 alufn = b000000 // Addition function selected!
                 regfile_ra1 = d3 // currentScore register selected!
+                regfile_ra2 = d4 // pointsPerHit register selected!
                 asel = b00
-                bsel = b10 // Decimal 1 is selected
+                bsel = b00 // Decimal 1 is selected
                 regfile_we = 1 // Write Enabled!
                 regfile_wa = d3 // currentScore is the Write Addr
-                game_fsm.d = States.SPAWN_MOLE
+                game_fsm.d = States.RESET_TIMER
             
             States.CHECK_MOLETIMER:
                 alufn = b110011 // Compare function selected!

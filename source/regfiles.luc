@@ -18,13 +18,14 @@ module regfiles (
     
     .clk(clk) {
         .rst(rst) {
-            dff currentMoleIndex[3](#INIT(0))
+            dff currentMoleIndex[32](#INIT(0))
             dff moleTimer[32](#INIT(0))
             dff buttonPressed[32](#INIT(0))
             dff currentScore[32](#INIT(0))
             dff pointsPerHit[32](#INIT(0))
             dff highScore[32](#INIT(0))
             dff temp_reg[32](#INIT(0))
+            dff consecutiveHits[32](#INIT(0))
         }
     }
     
@@ -32,13 +33,14 @@ module regfiles (
         
         if (we) {
             case (wa) {
-                d0: currentMoleIndex.d = data[2:0]
+                d0: currentMoleIndex.d = data
                 d1: moleTimer.d = data
                 d2: buttonPressed.d = data
                 d3: currentScore.d = data
                 d4: pointsPerHit.d = data
                 d5: highScore.d = data
                 d6: temp_reg.d = data
+                d7: consecutiveHits.d = data
                 
             }
         }
@@ -51,6 +53,7 @@ module regfiles (
             d4: ra_out = pointsPerHit.q
             d5: ra_out = highScore.q
             d6: ra_out = temp_reg.q
+            d7: ra_out = consecutiveHits.q
             default: ra_out = 0
         }
         
@@ -62,10 +65,11 @@ module regfiles (
             d4: rb_out = pointsPerHit.q
             d5: rb_out = highScore.q
             d6: rb_out = temp_reg.q
+            d7: rb_out = consecutiveHits.q
             default: rb_out = 0
         }
         
-        currentMoleIndex_out = currentMoleIndex.q
+        currentMoleIndex_out = currentMoleIndex.q[2:0]
         timer_out = moleTimer.q
         current_score_out = currentScore.q
         

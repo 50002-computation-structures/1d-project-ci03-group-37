@@ -17,7 +17,7 @@ module alchitry_top (
     sig current_score[32]
     const CLOCK_DIVIDER = $is_sim() ? 9 : 26
     const FAST_CLOCK_DIV = $is_sim() ? 7 : 21
-    const CLK_FREQ = $is_sim() ? 1000 : 100000000
+    const CLK_FREQ = $is_sim() ? 1000 : 10000000
     
     .clk(clk) {
         
@@ -69,11 +69,12 @@ module alchitry_top (
         mole_timer = datapath.timer_out
         current_score = datapath.current_score
         
-        decimal_renderer.value = current_score[13:0]
+        //decimal_renderer.value = current_score[13:0]
+        decimal_renderer.value = mole_timer
         seg.values = decimal_renderer.digits
         
         io_led[0][current_mole_index] = 1
-        io_led[1] = mole_timer
+        //io_led[1] = mole_timer
         
     }
 }

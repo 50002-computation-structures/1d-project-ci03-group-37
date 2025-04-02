@@ -31,7 +31,7 @@ module game_datapath #(
         counter mole_timer_clock(#SIZE(1), #DIV(SLOW_CLOCK_DIV), .rst(rst))
         edge_detector edge_detector_mole_timer(#RISE(1), #FALL(0), .in(mole_timer_clock.value))
         
-        counter rng_generator_clock(#SIZE(1), #DIV(FAST_CLOCK_DIV), .rst(rst))
+        counter rng_generator_clock(#SIZE(1), #DIV(SLOW_CLOCK_DIV), .rst(rst))
         
         /* Instantiate helper module: random_number_generator */
         random_number_generator generator(.slow_clk(rng_generator_clock.value), .refresh(button0))
@@ -64,6 +64,7 @@ module game_datapath #(
         case (game_cu.asel) {
             b00: input_alu_a = regfile.ra_out
             b11: input_alu_a = 10
+            b10: input_alu_a = 1
             default: input_alu_a = 0
         }
         
@@ -88,6 +89,7 @@ module game_datapath #(
             b100: regfile.data = 2
             b101: regfile.data = 3
             b110: regfile.data = 4
+            b111: regfile.data = 10
             default: regfile.data = alu.alu_output
         }
         
