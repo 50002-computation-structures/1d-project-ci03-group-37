@@ -13,32 +13,32 @@ module alchitry_top (
     
     sig rst                 // reset signal
     sig current_mole_index[3]
-    sig mole_timer[32]
     sig current_score[32]
-    const CLOCK_DIVIDER = $is_sim() ? 9 : 26
-    const FAST_CLOCK_DIV = $is_sim() ? 7 : 21
+    const CLOCK_DIVIDER = $is_sim() ? 5d9 : 5d24
+    const FAST_CLOCK_DIV = $is_sim() ? 5d7 : 5d18
     const CLK_FREQ = $is_sim() ? 1000 : 10000000
     
     .clk(clk) {
         
         reset_conditioner reset_cond
         
-        edge_detector io_button_edge[5](#RISE({1, 1, 1, 1, 1}), #FALL({0, 0, 0, 0, 0}))
-        button_conditioner io_button_cond[5](#CLK_FREQ({CLK_FREQ, CLK_FREQ, CLK_FREQ, CLK_FREQ, CLK_FREQ}))
+        edge_detector edge_button0(#RISE(1), #FALL(0))
+        edge_detector edge_button1(#RISE(1), #FALL(0))
+        edge_detector edge_button2(#RISE(1), #FALL(0))
+        edge_detector edge_button3(#RISE(1), #FALL(0))
+        edge_detector edge_button4(#RISE(1), #FALL(0))
         
-        multi_seven_seg seg (#DIV($is_sim() ? 1 : 16), #DIGITS(4), .rst(rst))
+        button_conditioner cond_button0(#CLK_FREQ(CLK_FREQ))
+        button_conditioner cond_button1(#CLK_FREQ(CLK_FREQ))
+        button_conditioner cond_button2(#CLK_FREQ(CLK_FREQ))
+        button_conditioner cond_button3(#CLK_FREQ(CLK_FREQ))
+        button_conditioner cond_button4(#CLK_FREQ(CLK_FREQ))
         
-        /* Instantiate datapath */
-        game_datapath datapath (
-            #SLOW_CLOCK_DIV(CLOCK_DIVIDER),
-            #FAST_CLOCK_DIV(FAST_CLOCK_DIV),
-            .rst(rst),
-            .button0(io_button_edge.out[0]),
-            .button1(io_button_edge.out[1]),
-            .button2(io_button_edge.out[2]),
-            .button3(io_button_edge.out[3]),
-            .button4(io_button_edge.out[4])
-        )
+        .rst(rst) {
+            multi_seven_seg seg (#DIV($is_sim() ? 1 : 16), #DIGITS(4))
+            /* Instantiate datapath */
+            game_datapath datapath (#SLOW_CLOCK_DIV(CLOCK_DIVIDER), #FAST_CLOCK_DIV(FAST_CLOCK_DIV))
+        }
         
     }
     
@@ -46,19 +46,34 @@ module alchitry_top (
     
     always {
         
+        /* Reset configurations */
+        reset_cond.in = ~rst_n
+        rst = reset_cond.out
+        
         /* Default values for peripherals */
         io_led = 3x{{8h0}}
         led = 8h0
         io_segment = 8h00
         io_select = 4hF
         
-        /* Reset configurations */
-        reset_cond.in = ~rst_n
-        rst = reset_cond.out
-        
         /* Button Conditioner configurations */
-        io_button_cond.in = io_button
-        io_button_edge.in = io_button_cond.out
+        cond_button0.in = io_button[0]
+        cond_button1.in = io_button[1]
+        cond_button2.in = io_button[2]
+        cond_button3.in = io_button[3]
+        cond_button4.in = io_button[4]
+        
+        edge_button0.in = cond_button0.out
+        edge_button1.in = cond_button1.out
+        edge_button2.in = cond_button2.out
+        edge_button3.in = cond_button3.out
+        edge_button4.in = cond_button4.out
+        
+        datapath.button0 = edge_button0.out
+        datapath.button1 = edge_button1.out
+        datapath.button2 = edge_button2.out
+        datapath.button3 = edge_button3.out
+        datapath.button4 = edge_button4.out
         
         io_segment = ~seg.seg // changed from ~seg.seg because 7 seg is CC
         io_select = ~seg.sel
@@ -66,15 +81,25 @@ module alchitry_top (
         usb_tx = usb_rx         // loop serial port
         
         current_mole_index = datapath.current_mole_index_out
-        mole_timer = datapath.timer_out
         current_score = datapath.current_score
         
         //decimal_renderer.value = current_score[13:0]
-        decimal_renderer.value = mole_timer
+        decimal_renderer.value = datapath.timer_out
         seg.values = decimal_renderer.digits
         
-        io_led[0][current_mole_index] = 1
+        
         //io_led[1] = mole_timer
+        case (io_dip[2]){
+            b00:
+                io_led[0][current_mole_index] = 1
+            b01:
+                io_led[0] = datapath.asel_out
+            
+        }
+        io_led[1] = datapath.alu_out 
+        io_led[2] = datapath.debug
+        led[0] = datapath.mole_timer_clock_out
+        
         
     }
 }

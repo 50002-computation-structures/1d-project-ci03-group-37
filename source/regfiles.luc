@@ -19,10 +19,10 @@ module regfiles (
     .clk(clk) {
         .rst(rst) {
             dff currentMoleIndex[32](#INIT(0))
-            dff moleTimer[32](#INIT(0))
+            dff moleTimer[32](#INIT(10))
             dff buttonPressed[32](#INIT(0))
             dff currentScore[32](#INIT(0))
-            dff pointsPerHit[32](#INIT(0))
+            dff pointsPerHit[32](#INIT(1))
             dff highScore[32](#INIT(0))
             dff temp_reg[32](#INIT(0))
             dff consecutiveHits[32](#INIT(0))

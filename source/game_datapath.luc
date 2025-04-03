@@ -1,7 +1,7 @@
 module game_datapath #(
     
-    SLOW_CLOCK_DIV ~ 26 : SLOW_CLOCK_DIV > 0,
-    FAST_CLOCK_DIV ~ 21 : FAST_CLOCK_DIV > 0
+    SLOW_CLOCK_DIV ~ 5d26 : SLOW_CLOCK_DIV > 0,
+    FAST_CLOCK_DIV ~ 5d21 : FAST_CLOCK_DIV > 0
     
 )(
     input clk,  // clock
@@ -15,16 +15,22 @@ module game_datapath #(
     
     output current_mole_index_out[3],
     output timer_out[32],
-    output current_score[32]
+    output current_score[32],
+    output alu_out[8],
+    output debug[8],
+    output regfile_data_write_inp[8],
+    output mole_timer_clock_out,
+    output asel_out[8]
     
 ) {
     
     // temporary variables
     sig input_alu_a[32]
     sig input_alu_b[32]
+    sig regfile_data_write[32]
     
     /* instantiate alu module here */
-    game_alu alu
+    alu alu
     
     .clk(clk) {
         
@@ -58,6 +64,13 @@ module game_datapath #(
     
     always {
         
+        input_alu_a = 0
+        input_alu_b = 0
+        regfile_data_write = 0
+        
+        alu_out = alu.alu_output[7:0]
+        debug = game_cu.debug
+        
         game_cu.regfile_rb_out = regfile.rb_out
         
         /* asel mux */
@@ -65,37 +78,43 @@ module game_datapath #(
             b00: input_alu_a = regfile.ra_out
             b11: input_alu_a = 10
             b10: input_alu_a = 1
-            default: input_alu_a = 0
         }
         
         /* bsel mux */
         case (game_cu.bsel) {
             b00: input_alu_b = regfile.rb_out
             b01: input_alu_b = 0
+            //b11: input_alu_b = 5
             b10: input_alu_b = 1
-            default: input_alu_b = 0
         }
         
         /* insert alu assignments here */
+        asel_out = input_alu_a 
+        
         alu.a = input_alu_a
         alu.b = input_alu_b
         alu.alufn = game_cu.alufn
         
         /* wdsel mux */
         case (game_cu.alu_out_sel) {
-            b001: regfile.data = generator.out
-            b010: regfile.data = 0
-            b011: regfile.data = 1
-            b100: regfile.data = 2
-            b101: regfile.data = 3
-            b110: regfile.data = 4
-            b111: regfile.data = 10
-            default: regfile.data = alu.alu_output
+            b000: regfile_data_write = alu.alu_output
+            b001: regfile_data_write = generator.out
+            b010: regfile_data_write = 0
+            b011: regfile_data_write = 1
+            b100: regfile_data_write = 2
+            b101: regfile_data_write = 3
+            b110: regfile_data_write = 4
+            b111: regfile_data_write = 10
         }
+        
+        regfile.data = regfile_data_write
         
         current_mole_index_out = regfile.currentMoleIndex_out
         timer_out = regfile.timer_out
         current_score = regfile.current_score_out
+        
+        regfile_data_write_inp = regfile_data_write[7:0]
+        mole_timer_clock_out = mole_timer_clock.value
         
     }
 }
