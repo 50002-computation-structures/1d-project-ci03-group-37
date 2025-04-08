@@ -1,4 +1,4 @@
-module game_cu (
+module game_cu_v2 (
     input clk,  // clock
     input rst,  // reset
     input regfile_rb_out[32], // direct reading of regfile data from rb_out
@@ -41,7 +41,14 @@ module game_cu (
         CHECK_MOLE_DELAY,
         BRANCH_CHECKMOLEDELAY,
         DECREASE_MOLE_DELAY,
-        RESTART
+        RESTART,
+        UPDATE_STREAK,
+        CHECK_STREAK,
+        BRANCH_STREAK,
+        INCREASE_POINTSPERHIT,
+        RESET_CONSECUTIVE,
+        RESET_SCORE,
+        RESET_POINTSPERHIT
         
     }
     
@@ -170,17 +177,61 @@ module game_cu (
                     regfile_ra1 = d3 // currentScore register selected!
                     regfile_ra2 = d4 // pointsPerHit register selected!
                     asel = b00
-                    bsel = b00 // Decimal 1 is selected
+                    bsel = b00
                     regfile_we = 1 // Write Enabled!
                     regfile_wa = d3 // currentScore is the Write Addr
                     alu_out_sel = b000
-                    game_fsm.d = States.SET_MOLE_DELAY
+                    game_fsm.d = States.UPDATE_STREAK     
                     debug = 8d8
+                
+                States.UPDATE_STREAK:
+                    regfile_ra1 = d7             // consecutiveHits
+                    asel = b00
+                    bsel = b10                   // constant 1
+                    alufn = b000000              // Add
+                    regfile_wa = d7
+                    regfile_we = 1
+                    alu_out_sel = b000
+                    game_fsm.d = States.CHECK_STREAK
+                
+                States.CHECK_STREAK:
+                    regfile_ra1 = d7             // consecutiveHits
+                    asel = b00
+                    bsel = b11                   // constant 5
+                    alufn = b110011              // Compare ==
+                    regfile_wa = d6              // store in temp
+                    regfile_we = 1
+                    alu_out_sel = b000
+                    game_fsm.d = States.BRANCH_STREAK
+                
+                States.BRANCH_STREAK:
+                    regfile_ra2 = d6             // Read temp reg
+                    if (regfile_rb_out[0]) {
+                        game_fsm.d = States.INCREASE_POINTSPERHIT
+                    } else {
+                        game_fsm.d = States.SET_MOLE_DELAY
+                    }
+                
+                States.INCREASE_POINTSPERHIT:
+                    regfile_ra1 = d4             // pointsPerHit
+                    asel = b00
+                    bsel = b10                   // constant 1
+                    alufn = b000000              // Add
+                    regfile_wa = d4
+                    regfile_we = 1
+                    alu_out_sel = b000
+                    game_fsm.d = States.RESET_CONSECUTIVE
+                
+                States.RESET_CONSECUTIVE:
+                    regfile_wa = d7              // reset consecutiveHits
+                    regfile_we = 1
+                    alu_out_sel = b010           // constant 0
+                    game_fsm.d = States.SET_MOLE_DELAY
                 
                 States.SET_MOLE_DELAY:
                     regfile_we = 1
                     regfile_wa = d5
-                    alu_out_sel = b100
+                    alu_out_sel = b110
                     game_fsm.d = States.CHECK_MOLE_DELAY
                 
                 States.CHECK_MOLE_DELAY:
@@ -244,7 +295,7 @@ module game_cu (
                     regfile_we = 1 // Write Enabled!
                     regfile_wa = d1 // Write to moleTimer register
                     alu_out_sel = b110
-                    game_fsm.d = States.SPAWN_MOLE                
+                    game_fsm.d = States.SPAWN_MOLE               
                 
                 
                 States.CHECK_MOLETIMER:
@@ -286,21 +337,23 @@ module game_cu (
                     debug = 8d11
                 
                 
-                States.GAMEOVER: // Reset currentScore to 0
-                    debug = 8d12
-                    alu_out_sel = b010 // 0 selected
-                    regfile_wa = d3 // write to currentScore
-                    regfile_we = 1 // write enabled
+                States.GAMEOVER: // Reset pointsPerHit to 1
+                    regfile_we = 1
+                    regfile_wa = d4
+                    alu_out_sel = b011
                     game_fsm.d = States.RESTART
                 
                 
                 States.RESTART:
                     debug = 8d15
                     if (button0) {
+                        regfile_we = 1
+                        regfile_wa = d3
+                        alu_out_sel = b010
                         game_fsm.d = States.RESET_TIMER
                     } else {
                         game_fsm.d = States.RESTART
-                    }
+                    }                
                 
                 
             }

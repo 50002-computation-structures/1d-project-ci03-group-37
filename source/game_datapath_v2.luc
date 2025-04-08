@@ -1,4 +1,4 @@
-module game_datapath #(
+module game_datapath_v2 #(
     
     SLOW_CLOCK_DIV ~ 5d26 : SLOW_CLOCK_DIV > 0,
     FAST_CLOCK_DIV ~ 5d21 : FAST_CLOCK_DIV > 0
@@ -43,7 +43,7 @@ module game_datapath #(
         /* Instantiate helper module: random_number_generator */
         random_number_generator generator(.slow_clk(rng_generator_clock.value), .refresh(button0))
         
-        game_cu game_cu(
+        game_cu_v2 game_cu(
             .rst(rst),
             .decrease_timer(edge_detector_mole_timer.out),
             .button0(button0),

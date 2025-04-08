@@ -1,4 +1,4 @@
-module alu #(
+module alu_v2 #(
     SIZE = 32 : SIZE > 1
 )
 (
@@ -17,7 +17,7 @@ module alu #(
     divider divider(#SIZE(SIZE))
     boolean boolean(#SIZE(SIZE))
     shifter shifter(#SIZE(32))
-    mux_3 small_mux(#SIZE(32))
+    mux_2 small_mux(#SIZE(32))
     mux_4_32 big_mux
     sig conditions[4][32]
     
@@ -46,11 +46,9 @@ module alu #(
         divider.b = b
         
         /* Small Mux */
-        small_mux.s0 = alufn[0]
-        small_mux.s1 = alufn[1]
+        small_mux.s0 = alufn[1]
         small_mux.inp1 = adder.out
         small_mux.inp2 = multiplier.mul
-        small_mux.inp3 = divider.quotient
         
         /* Inputs for Big Mux */
         conditions[0] = small_mux.out
@@ -64,10 +62,6 @@ module alu #(
         big_mux.in = conditions
         
         out = big_mux.out 
-        
-        
-        
-        
         
     }
 }

@@ -1,0 +1,50 @@
+module random_number_generator#(
+    SIZE = 8
+) (
+    input clk,  // clock
+    input slow_clk,
+    input refresh,
+    output out[SIZE]
+) {
+    
+    dff seed[32](#INIT(0), .clk(clk))
+    pn_gen pn_gen(.clk(clk), .seed(seed.q)) 
+    
+    edge_detector edge_detector(#RISE(1), #FALL(1), .clk(clk), .in(slow_clk))
+    
+    always {
+        seed.d = seed.q + 1 
+        pn_gen.rst = 0
+        pn_gen.next = 0
+        out = 0
+        
+        if (refresh){
+            pn_gen.rst = 1 // capture seed, generate fresh sequence
+        }
+        
+        if (edge_detector.out){
+            pn_gen.next = 1
+        }
+        
+        case (pn_gen.num[2:0]) {
+            3b000:
+            out = 0
+            3b001:
+            out = 1
+            3b010:
+            out = 2
+            3b011:
+            out = 3
+            3b100:
+            out = 4
+            3b101:
+            out = 3
+            3b110:
+            out = 4
+            3b111:
+            out = 0
+            default: out = 0
+        }
+        
+    }
+}
