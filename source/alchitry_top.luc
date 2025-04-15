@@ -74,14 +74,13 @@ module alchitry_top (
         datapath.button3 = edge_button3.out
         datapath.button4 = edge_button4.out
         
-        io_segment = ~seg.seg // changed from ~seg.seg because 7 seg is CC
+        io_segment = seg.seg // changed from ~seg.seg because 7 seg is CC
         io_select = ~seg.sel
         
         usb_tx = usb_rx         // loop serial port
         
         
         decimal_renderer.value = datapath.current_score[13:0]
-        //decimal_renderer.value = datapath.timer_out
         seg.values = decimal_renderer.digits
         
         
@@ -98,9 +97,13 @@ module alchitry_top (
             io_led[0][datapath.current_mole_index_out] = 1
         }
         
-        else if (datapath.fsm_state_out == 5d9) {
+        else if (datapath.fsm_state_out == 5d9) { // 
             decimal_renderer.value = datapath.current_score[13:0]
             seg.values = decimal_renderer.digits
+        }
+        
+        else if (datapath.fsm_state_out == 5d19) { // if RESTART
+            io_led[0] = 8b11111111
         }
         
         else {

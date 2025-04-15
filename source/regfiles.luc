@@ -19,13 +19,13 @@ module regfiles (
     .clk(clk) {
         .rst(rst) {
             dff currentMoleIndex[32](#INIT(0))
-            dff moleTimer[32](#INIT(10))
+            dff moleTimer[32](#INIT(5))
             dff buttonPressed[32](#INIT(0))
             dff currentScore[32](#INIT(0))
             dff pointsPerHit[32](#INIT(1))
-            dff highScore[32](#INIT(0))
             dff temp_reg[32](#INIT(0))
             dff consecutiveHits[32](#INIT(0))
+            dff delay_mole_timer[32](#INIT(0))
         }
     }
     
@@ -38,7 +38,7 @@ module regfiles (
                 d2: buttonPressed.d = data
                 d3: currentScore.d = data
                 d4: pointsPerHit.d = data
-                d5: highScore.d = data
+                d5: delay_mole_timer.d = data
                 d6: temp_reg.d = data
                 d7: consecutiveHits.d = data
                 
@@ -51,7 +51,7 @@ module regfiles (
             d2: ra_out = buttonPressed.q
             d3: ra_out = currentScore.q
             d4: ra_out = pointsPerHit.q
-            d5: ra_out = highScore.q
+            d5: ra_out = delay_mole_timer.q
             d6: ra_out = temp_reg.q
             d7: ra_out = consecutiveHits.q
             default: ra_out = 0
@@ -63,7 +63,7 @@ module regfiles (
             d2: rb_out = buttonPressed.q
             d3: rb_out = currentScore.q
             d4: rb_out = pointsPerHit.q
-            d5: rb_out = highScore.q
+            d5: rb_out = delay_mole_timer.q
             d6: rb_out = temp_reg.q
             d7: rb_out = consecutiveHits.q
             default: rb_out = 0

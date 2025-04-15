@@ -79,7 +79,7 @@ module game_datapath_v2 #(
         /* asel mux */
         case (game_cu.asel) {
             b00: input_alu_a = regfile.ra_out
-            b11: input_alu_a = 32d10
+            b11: input_alu_a = 32d5
             b10: input_alu_a = 32d1
         }
         

@@ -94,9 +94,9 @@ module game_cu_v2 (
                     game_fsm.d = States.WAIT_INPUT
                     debug = 8d2               
                 
-                States.RESET_TIMER: /* This state resets the timer to 10 when a correctHit is detected */
-                    alufn = b011010
-                    asel = b11
+                States.RESET_TIMER: /* This state resets the timer when a correctHit is detected */
+                    alufn = b011010 // "A" Operation
+                    asel = b11 // constant 5
                     bsel = 0
                     regfile_ra1 = d0 
                     regfile_ra2 = d0 
@@ -185,13 +185,13 @@ module game_cu_v2 (
                     debug = 8d8
                 
                 States.UPDATE_STREAK:
-                    regfile_ra1 = d7             // consecutiveHits
+                    regfile_ra1 = d7 // consecutiveHits register
                     asel = b00
-                    bsel = b10                   // constant 1
-                    alufn = b000000              // Add
-                    regfile_wa = d7
-                    regfile_we = 1
-                    alu_out_sel = b000
+                    bsel = b10 // constant 1
+                    alufn = b000000 // Addition
+                    regfile_wa = d7 // write to consecutiveHits register
+                    regfile_we = 1 // Write Enabled!
+                    alu_out_sel = b000 // ALU's output
                     game_fsm.d = States.CHECK_STREAK
                 
                 States.CHECK_STREAK:
@@ -206,7 +206,7 @@ module game_cu_v2 (
                 
                 States.BRANCH_STREAK:
                     regfile_ra2 = d6             // Read temp reg
-                    if (regfile_rb_out[0]) {
+                    if (regfile_rb_out[0]) { // if there are 5 consecutiveHits
                         game_fsm.d = States.INCREASE_POINTSPERHIT
                     } else {
                         game_fsm.d = States.SET_MOLE_DELAY
@@ -287,14 +287,14 @@ module game_cu_v2 (
                     }                
                 
                 States.DECREASE_MOLE_TIMER:
-                    alufn = 0 // don't care what this is
+                    alufn = 0
                     regfile_ra1 = d0
                     regfile_ra2 = d0
                     asel = b00 
                     bsel = b00 
                     regfile_we = 1 // Write Enabled!
                     regfile_wa = d1 // Write to moleTimer register
-                    alu_out_sel = b110
+                    alu_out_sel = b100 // constant 2
                     game_fsm.d = States.SPAWN_MOLE               
                 
                 
@@ -316,7 +316,7 @@ module game_cu_v2 (
                     debug[0] = regfile_rb_out[0]
                     debug[7:1] = b1111000
                     
-                    if (regfile_rb_out[0] == 1) { // if timer is not zero
+                    if (regfile_rb_out[0] == 1) { // if timer is zero, GAME OVER
                         game_fsm.d = States.GAMEOVER
                     } else {
                         game_fsm.d = States.DECREASE_MOLETIMER
@@ -337,7 +337,11 @@ module game_cu_v2 (
                     debug = 8d11
                 
                 
-                States.GAMEOVER: // Reset pointsPerHit to 1
+                States.GAMEOVER:
+                    
+                    game_fsm.d = States.RESET_POINTSPERHIT
+                
+                States.RESET_POINTSPERHIT:
                     regfile_we = 1
                     regfile_wa = d4
                     alu_out_sel = b011
@@ -346,14 +350,18 @@ module game_cu_v2 (
                 
                 States.RESTART:
                     debug = 8d15
-                    if (button0) {
-                        regfile_we = 1
-                        regfile_wa = d3
-                        alu_out_sel = b010
-                        game_fsm.d = States.RESET_TIMER
+                    if (button0 || button1 || button2 || button3 || button4) {
+                        game_fsm.d = States.RESET_SCORE
                     } else {
                         game_fsm.d = States.RESTART
-                    }                
+                    }
+                
+                States.RESET_SCORE:
+                    regfile_we = 1
+                    regfile_wa = d3
+                    alu_out_sel = b010
+                    game_fsm.d = States.RESET_TIMER
+                
                 
                 
             }

@@ -5,7 +5,7 @@ module divider #(
     input b[SIZE],   
     output quotient[SIZE] // quotient output (16-bit)
 ) {
-    
+
     always {
         quotient = a / b
     }
