@@ -1,44 +1,47 @@
 [![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/vxyPYWbJ)
+
 # 2025 50.002 1D Project
 
-This starter template is created using Alchitry Lab V2, written in LucidV2 language. Full documentation can be found at [Alchitry's official website](https://alchitry.com/tutorials/). 
+# MoleDash
 
-# Computation-Structure-Lab3
+- A Whack-A-Mole inspired game implemented on FPGA using Lucid HDL \*
 
-FPGA-based ALU implementation using Lucid on Alchitry, supporting arithmetic, boolean, comparison, and shift operations with FSM-based input handling.
+---
+
+## Overview
+
+**MoleDash** is a fast paced reaction game built on Alchitry Au FPGA board using Lucid HDL. It features real-time LED mole spawning, button input detection, dynamic scoring logic, and streak-based score multipliers.
+
+---
+
+## Game Description
+
+- One random LED lights up at a time (representing a mole)
+- Player must hit the corresponding button **before the timer runs out**
+- Correct hit: score increases
+- Incorrect or no input within time limit: **game over**
+- After 5 consecutive correct hits, the "points per hit" value increases
+
+---
 
 ## Features
 
-✅ 32-bit ALU operations  
-✅ Boolean logic, arithmetic, comparison, and shifting  
-✅ FSM-based input handling  
-✅ Implemented using **Lucid HDL** in **Alchitry Labs**  
-✅ Auto Tester
+- Finite State Machine (FSM) control logic
+- Datapath integration with register file and ALU
+- Button edge detection and debouncing
+- Timer-based gameplay logic
+- 7-segment display for real-time score display
+- Random number generation for mole index
+- Streak tracking and score multipliers
 
-## ALU Operations
+---
 
-| Operation   | ALUFN Code | Description |
-| ----------- | ---------- | ----------- |
-| Addition    | `000000`   | A + B       |
-| Subtraction | `000001`   | A - B       |
-| MUL         | `000010`   | A & B       |
-| AND         | `011000`   | A \| B      |
-| OR          | `011110`   | A ^ B       |
-| XOR         | `010110`   | A << B      |
-| "A"         | `011010`   | A >> B      |
-| SHL         | `100000`   | A == B      |
-| SHR         | `100001`   | A < B       |
-| SRA         | `100011`   | A < B       |
-| CMPEQ       | `110011`   | A < B       |
-| CMPLT       | `110101`   | A < B       |
-| CMPLE       | `110111`   | A < B       |
+## Components Used
 
-## Files & Modules
-
-- **alu.luc** – ALU core logic
-- **boolean.luc** – Boolean logic operations
-- **adder.luc** – Arithmetic operations
-- **shift.luc** – Shift operations
-- **compare.luc** – Comparison operations
-- **alu_manual_tester.luc** – Manual Tester
-- **alu_fsm** - Brain of the operation
+| Component          | Description                            |
+| ------------------ | -------------------------------------- |
+| Alchitry Au Board  | FPGA with 100 MHz clock                |
+| Alchitry Io Shield | Interface for buttons, LEDs, 7-segment |
+| RGB LED Buttons    | Used as both inputs and outputs        |
+| Breadboard + Wires | Wiring for IO connectivity             |
+| 7-Segment Display  | Display current score and timer        |
